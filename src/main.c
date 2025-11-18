@@ -5,6 +5,13 @@
  *   ./bin/train --data-dir DIR --max-images 1000
  */
 
+/* Tiny trainer main
+ * Loads images from PetImages/Cat and PetImages/Dog by default (labels derived from folder names).
+ * Usage:
+ *   ./bin/train                # uses PetImages if present, otherwise synthetic
+ *   ./bin/train --data-dir DIR --max-images 1000
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

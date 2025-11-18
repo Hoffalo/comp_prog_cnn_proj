@@ -42,6 +42,23 @@ cmake --build .
 
 If `stb_image` is not provided, the trainer will still build and you can use PGM images or the built-in synthetic dataset.
 
+Directory-per-class layout (PetImages)
+
+The trainer now recognizes a directory-per-class layout. If you have a `PetImages` folder with two subfolders `Cat/` and `Dog/`, run:
+
+```bash
+./bin/train --data-dir PetImages
+```
+
+The program will scan `PetImages/*` for subdirectories and treat each subdirectory name as a class label. For this demo it looks for the tokens `cat` and `dog` in subdirectory names to assign labels (case-insensitive). It will load images from each subdirectory and train on them.
+
+You can limit how many images are loaded with `--max-images N` (default 1000):
+
+```bash
+./bin/train --data-dir PetImages --max-images 2000
+```
+
+
 Note: this repository includes a small placeholder at `third_party/stb_image.h` so the project compiles out-of-the-box.
 To enable real image loading (PNG/JPEG) replace it with the official single-file header:
 

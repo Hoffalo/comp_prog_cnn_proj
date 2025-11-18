@@ -1,0 +1,3 @@
+/workspaces/comp_prog_cnn_proj/build/CMakeFiles/train.dir
+/workspaces/comp_prog_cnn_proj/build/CMakeFiles/edit_cache.dir
+/workspaces/comp_prog_cnn_proj/build/CMakeFiles/rebuild_cache.dir

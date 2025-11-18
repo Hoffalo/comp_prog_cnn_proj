@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/train.dir/src/cnn.c.o CMakeFiles/train.dir/src/image.c.o CMakeFiles/train.dir/src/main.c.o CMakeFiles/train.dir/src/utils.c.o -o /workspaces/comp_prog_cnn_proj/bin/train  -lm 

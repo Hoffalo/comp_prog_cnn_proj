@@ -68,10 +68,14 @@ CMakeFiles/train.dir/src/main.c.o: \
  /usr/include/x86_64-linux-gnu/bits/errno.h /usr/include/linux/errno.h \
  /usr/include/x86_64-linux-gnu/asm/errno.h \
  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
- /usr/include/ctype.h /workspaces/comp_prog_cnn_proj/src/image.h \
+ /workspaces/comp_prog_cnn_proj/src/image.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
  /workspaces/comp_prog_cnn_proj/src/cnn.h \
- /workspaces/comp_prog_cnn_proj/src/utils.h
+ /workspaces/comp_prog_cnn_proj/src/utils.h \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h \
+ /usr/include/limits.h /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
+ /usr/include/ctype.h

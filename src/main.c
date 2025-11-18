@@ -1,3 +1,186 @@
+/* Tiny trainer main
+ * Loads images from PetImages/Cat and PetImages/Dog by default (labels derived from folder names).
+ * Usage:
+ *   ./bin/train                # uses PetImages if present, otherwise synthetic
+ *   ./bin/train --data-dir DIR --max-images 1000
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#include <strings.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include "image.h"
+#include "cnn.h"
+#include "utils.h"
+
+static int has_image_ext(const char *name) {
+    const char *ext = strrchr(name, '.');
+    if (!ext) return 0; ext++;
+    if (!ext) return 0;
+    if (strcasecmp(ext, "jpg") == 0) return 1;
+    if (strcasecmp(ext, "jpeg") == 0) return 1;
+    if (strcasecmp(ext, "png") == 0) return 1;
+    if (strcasecmp(ext, "bmp") == 0) return 1;
+    if (strcasecmp(ext, "gif") == 0) return 1;
+    if (strcasecmp(ext, "pgm") == 0) return 1;
+    if (strcasecmp(ext, "tif") == 0) return 1;
+    if (strcasecmp(ext, "tiff") == 0) return 1;
+    if (strcasecmp(ext, "ppm") == 0) return 1;
+    return 0;
+}
+
+static void ensure_capacity(Image ***imgs, int **labs, int *cap, int need) {
+    if (need <= *cap) return;
+    int newcap = *cap ? *cap * 2 : 256;
+    while (newcap < need) newcap *= 2;
+    Image **nimgs = realloc(*imgs, sizeof(Image*) * newcap);
+    int *nlabs = realloc(*labs, sizeof(int) * newcap);
+    if (!nimgs || !nlabs) { fprintf(stderr, "out of memory\n"); exit(1); }
+    *imgs = nimgs; *labs = nlabs; *cap = newcap;
+}
+
+int main(int argc, char **argv) {
+    rand_seed((unsigned int)time(NULL));
+
+    const int W = 16, H = 16;
+    const int filters = 4, ksize = 3, pool = 2;
+
+    const char *data_dir = NULL;
+    int max_images = 1000; // default cap
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--data-dir") == 0 && i+1 < argc) { data_dir = argv[i+1]; i++; }
+        else if (strcmp(argv[i], "--max-images") == 0 && i+1 < argc) { max_images = atoi(argv[i+1]); if (max_images <= 0) max_images = 1000; i++; }
+    }
+
+    // prefer PetImages in repo root if present
+    struct stat stroot;
+    if (!data_dir) {
+        if (stat("PetImages", &stroot) == 0 && S_ISDIR(stroot.st_mode)) data_dir = "PetImages";
+    }
+
+    Image **images = NULL;
+    int *labels = NULL;
+    int count = 0, cap = 0;
+
+    if (!data_dir) {
+        // fallback synthetic small dataset
+        int N = 200;
+        ensure_capacity(&images, &labels, &cap, N);
+        for (int i = 0; i < N; ++i) {
+            images[count] = generate_synthetic(W, H, i < N/2);
+            labels[count] = (i < N/2) ? 1 : 0;
+            count++;
+        }
+        printf("Using synthetic dataset (%d samples)\n", count);
+    } else {
+        struct stat st;
+        if (stat(data_dir, &st) != 0) { fprintf(stderr, "data-dir '%s' not found\n", data_dir); return 1; }
+        if (S_ISDIR(st.st_mode)) {
+            // check whether data_dir contains subdirectories (class folders)
+            DIR *droot = opendir(data_dir);
+            if (!droot) { fprintf(stderr, "failed to open dir %s: %s\n", data_dir, strerror(errno)); return 1; }
+            struct dirent *entroot;
+            int found_subdirs = 0;
+            while ((entroot = readdir(droot))) {
+                if (entroot->d_name[0] == '.') continue;
+                char path[4096]; snprintf(path, sizeof(path), "%s/%s", data_dir, entroot->d_name);
+                struct stat st2; if (stat(path, &st2) != 0) continue;
+                if (S_ISDIR(st2.st_mode)) { found_subdirs = 1; break; }
+            }
+            closedir(droot);
+
+            if (found_subdirs) {
+                DIR *d = opendir(data_dir);
+                if (!d) { fprintf(stderr, "failed to open dir %s: %s\n", data_dir, strerror(errno)); return 1; }
+                while ((entroot = readdir(d))) {
+                    if (entroot->d_name[0] == '.') continue;
+                    char subpath[4096]; snprintf(subpath, sizeof(subpath), "%s/%s", data_dir, entroot->d_name);
+                    struct stat st3; if (stat(subpath, &st3) != 0) continue;
+                    if (!S_ISDIR(st3.st_mode)) continue;
+                    int lab = -1;
+                    if (strcasestr(entroot->d_name, "cat")) lab = 1;
+                    else if (strcasestr(entroot->d_name, "dog")) lab = 0;
+                    else continue; // skip unknown folders
+
+                    DIR *sd = opendir(subpath);
+                    if (!sd) continue;
+                    struct dirent *fent;
+                    while ((fent = readdir(sd))) {
+                        if (fent->d_name[0] == '.') continue;
+                        if (!has_image_ext(fent->d_name)) continue;
+                        if (max_images > 0 && count >= max_images) break;
+                        char filepath[4096]; snprintf(filepath, sizeof(filepath), "%s/%s", subpath, fent->d_name);
+                        Image *im = image_load_file(filepath, W, H);
+                        if (!im) continue;
+                        ensure_capacity(&images, &labels, &cap, count+1);
+                        images[count] = im; labels[count] = lab; count++;
+                    }
+                    closedir(sd);
+                    if (max_images > 0 && count >= max_images) break;
+                }
+                closedir(d);
+            } else {
+                // load files directly in data_dir and label by filename containing 'cat'
+                DIR *d = opendir(data_dir);
+                if (!d) { fprintf(stderr, "failed to open dir %s: %s\n", data_dir, strerror(errno)); return 1; }
+                struct dirent *ent2;
+                while ((ent2 = readdir(d))) {
+                    if (ent2->d_name[0] == '.') continue;
+                    if (!has_image_ext(ent2->d_name)) continue;
+                    if (max_images > 0 && count >= max_images) break;
+                    char path2[4096]; snprintf(path2, sizeof(path2), "%s/%s", data_dir, ent2->d_name);
+                    Image *im = image_load_file(path2, W, H);
+                    if (!im) continue;
+                    int lab = strcasestr(ent2->d_name, "cat") ? 1 : 0;
+                    ensure_capacity(&images, &labels, &cap, count+1);
+                    images[count] = im; labels[count] = lab; count++;
+                }
+                closedir(d);
+            }
+        } else {
+            // single file
+            Image *im = image_load_file(data_dir, W, H);
+            if (!im) { fprintf(stderr, "failed to load image %s\n", data_dir); return 1; }
+            ensure_capacity(&images, &labels, &cap, count+1);
+            images[count] = im; labels[count] = 0; count++;
+        }
+
+        if (count == 0) { fprintf(stderr, "no images loaded from %s\n", data_dir); return 1; }
+        printf("Loaded %d images from %s\n", count, data_dir);
+    }
+
+    // create network (now that we have data)
+    TinyCNN *net = cnn_create(W, H, filters, ksize, pool);
+    if (!net) { fprintf(stderr, "failed to create network\n"); return 1; }
+
+    // training loop
+    const int epochs = 10;
+    const float lr = 0.01f;
+    for (int e = 0; e < epochs; ++e) {
+        float epoch_loss = 0.0f;
+        int correct = 0;
+        for (int i = 0; i < count; ++i) {
+            float out = cnn_forward(net, images[i]);
+            int pred = out > 0.5f;
+            if (pred == labels[i]) correct++;
+            float loss = cnn_backward_and_update(net, images[i], labels[i], lr);
+            epoch_loss += loss;
+        }
+        printf("Epoch %d: loss=%.4f acc=%.3f\n", e+1, epoch_loss / count, (float)correct / count);
+    }
+
+    // save model and cleanup
+    cnn_save(net, "model.bin");
+    printf("Saved tiny model to model.bin\n");
+    for (int i = 0; i < count; ++i) image_free(images[i]);
+    free(images); free(labels);
+    cnn_free(net);
+    return 0;
+}
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

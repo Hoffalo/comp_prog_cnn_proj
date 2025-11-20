@@ -5,6 +5,8 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 file(GLOB SRC_FILES "${PROJECT_SOURCE_DIR}/src/*.c")
+# Restore main.c as the entrypoint and remove main_clean.c
+list(REMOVE_ITEM SRC_FILES "${PROJECT_SOURCE_DIR}/src/main_clean.c")
 
 add_executable(train ${SRC_FILES})
 target_include_directories(train PRIVATE ${PROJECT_SOURCE_DIR}/src)

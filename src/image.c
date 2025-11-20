@@ -129,8 +129,26 @@ Image *image_load_file(const char *path, int target_w, int target_h) {
         tmp->data[y*w + x] = v;
     }
     stbi_image_free(data);
-    if (w == target_w && h == target_h) return tmp;
+    // Normalize to zero mean/unit variance
+    if (w == target_w && h == target_h) {
+        float sum = 0.0f, sum2 = 0.0f;
+        int N = w*h;
+        for (int i = 0; i < N; ++i) { sum += tmp->data[i]; sum2 += tmp->data[i]*tmp->data[i]; }
+        float mean = sum / N;
+        float var = sum2 / N - mean*mean;
+        float std = sqrtf(var + 1e-6f);
+        for (int i = 0; i < N; ++i) tmp->data[i] = (tmp->data[i] - mean) / std;
+        return tmp;
+    }
     Image *res = image_resize_nn(tmp, target_w, target_h);
+    // Normalize resized image
+    float sum = 0.0f, sum2 = 0.0f;
+    int N = target_w*target_h;
+    for (int i = 0; i < N; ++i) { sum += res->data[i]; sum2 += res->data[i]*res->data[i]; }
+    float mean = sum / N;
+    float var = sum2 / N - mean*mean;
+    float std = sqrtf(var + 1e-6f);
+    for (int i = 0; i < N; ++i) res->data[i] = (res->data[i] - mean) / std;
     image_free(tmp);
     return res;
 #else

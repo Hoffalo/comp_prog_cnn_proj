@@ -1,6 +1,6 @@
-CMakeFiles/train.dir/src/main.c.o: \
- /workspaces/comp_prog_cnn_proj/src/main.c /usr/include/stdc-predef.h \
- /usr/include/stdio.h \
+CMakeFiles/train.dir/src/main_clean.c.o: \
+ /workspaces/comp_prog_cnn_proj/src/main_clean.c \
+ /usr/include/stdc-predef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -71,18 +71,10 @@ CMakeFiles/train.dir/src/main.c.o: \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h \
  /usr/include/limits.h /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
- /usr/include/ctype.h /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
- /workspaces/comp_prog_cnn_proj/src/image.h \
+ /usr/include/ctype.h /workspaces/comp_prog_cnn_proj/src/image.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
  /workspaces/comp_prog_cnn_proj/src/cnn.h \
- /workspaces/comp_prog_cnn_proj/src/utils.h /usr/include/math.h \
- /usr/include/x86_64-linux-gnu/bits/math-vector.h \
- /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h \
- /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h \
- /usr/include/x86_64-linux-gnu/bits/fp-logb.h \
- /usr/include/x86_64-linux-gnu/bits/fp-fast.h \
- /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h \
- /usr/include/x86_64-linux-gnu/bits/mathcalls.h
+ /workspaces/comp_prog_cnn_proj/src/utils.h
